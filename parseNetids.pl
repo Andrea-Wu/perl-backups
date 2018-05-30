@@ -16,25 +16,25 @@ if ($netids eq ""){
     $netids = "netid.txt";
 }
 
-print "Enter name of file to output [output.txt]: ";
-$output = <STDIN>;
-chomp($output);
-if ($output eq ""){
-    $output = "output.txt";
+print "Enter name of file to output email addresses [email_output.txt]: ";
+$email = <STDIN>;
+chomp($email);
+if ($email eq ""){
+    $email = "email_output.txt";
 }
+
+print "Enter name of file to output sharepoint sites [sharepoint_output.txt]: ";
+$sharepoint = <STDIN>;
+chomp($sharepoint);
+if ($sharepoint eq ""){
+    $sharepoint = "sharepoint_output.txt";
+}
+
 
 open(READ_UPNS, $input) or die("could not open $input for reading\n");
 open(READ_NETIDS, $netids) or die("could not open $netids for reading\n");
-open(my $write_fh, '+>', $output) or die("could not open $output for writing\n");
-
-#another option for checking if file is empty
-#if(-z $input){
-#    print "$input file is empty\n";
-#}
-
-#if(-z $netids){
-#    print "$netids file is empty\n";
-#}
+open(my $write_emails, '+>', $email) or die("could not open $email for writing\n");
+open(my $write_sharepoint, '+>', $sharepoint) or die("could not open $sharepoint for writing\n");
 
 #flags to see if file is empty
 $netids_nonempty = 0;
@@ -52,7 +52,7 @@ foreach $netid (<READ_NETIDS>){
     #get rid of newline in $netid
     chomp($netid);
 
-    #flag to see if name is found in output.txt
+    #flag to see if name is found in $input
     $found = 0;
 
     foreach $line (<READ_UPNS>){
@@ -69,7 +69,7 @@ foreach $netid (<READ_NETIDS>){
             @tokens = split(/:/, $line);
 
             #write to output file
-            print $write_fh ($tokens[1] . "\n");
+            print $write_emails ($tokens[1] . "\n");
             $found = 1;
             last;
         }
@@ -77,6 +77,16 @@ foreach $netid (<READ_NETIDS>){
 
     if($found == 0){
         print "netID not found: $netid\n";
+    }else{ 
+        
+        #put sharepoint stuff into separate file
+        $newToken = $tokens[1];
+
+        $newToken =~ s/@/_/;
+        $newToken =~ s/\./_/g;
+        
+        $sharepoint_string = "https://rutgersconnect-my.sharepoint.com/personal/" . $newToken . "\n"; 
+        print $write_sharepoint $sharepoint_string;
     }
 
     #reset file handler for READ_UPNS
