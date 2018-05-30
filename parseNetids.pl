@@ -14,7 +14,6 @@ $netids = <STDIN>;
 chomp($netids);
 if ($netids eq ""){
     $netids = "netid.txt";
-
 }
 
 print "Enter name of file to output [output.txt]: ";
