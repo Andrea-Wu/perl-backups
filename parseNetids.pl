@@ -3,28 +3,25 @@
 $/ = "\n";
 
 print "Enter name of file that contains UPN output [UPN.output]: ";
-$input = <STDIN>; 
-if ($input eq "\n"){
+$input = <STDIN>;
+chomp($input); 
+if ($input eq ""){
     $input = "UPN.output";
-}else{
-    chomp($input);
 }
 
 print "Enter name of file that contains list of netIDs [netid.txt]: ";
 $netids = <STDIN>;
-if ($netids eq "\n"){
+chomp($netids);
+if ($netids eq ""){
     $netids = "netid.txt";
 
-}else{
-    chomp($netids);
 }
 
 print "Enter name of file to output [output.txt]: ";
 $output = <STDIN>;
-if ($output eq "\n"){
+chomp($output);
+if ($output eq ""){
     $output = "output.txt";
-}else{
-    chomp($output);
 }
 
 open(READ_UPNS, $input) or die("could not open $input for reading\n");
