@@ -1,66 +1,81 @@
-#parse file UPN.output
-#
-#only search for lines that do not begin with "the", tokenize those lines
-#
-#put the email addresses corresponding to those lines in the file "output.txt"
+#!/usr/bin/perl
 
+$/ = "\n";
 
-#I don't know why the syntax is different in the 2 "open" cases, but it doesn't work otherwise
-open(READ, 'UPN.output') or die("could not open file for reading\n");
-open(my $write_fh, '+>', "output.txt") or die("could not open output.txt for writing\n");
-
-            
-foreach $line (<READ>){
-
-    #set default variable to $line so regex can parse it
-    $_ = $line;
-
-    if(/^[^the]/){
-    
-        #tokenizes line on deliminator ":"
-        @tokens = split(/:/, $line);
-
-        #output correct field to output.txt
-        print $write_fh ($tokens[1] . "\n");
-    }
-
+print "Enter name of file that contains UPN output [UPN.output]: ";
+$input = <STDIN>; 
+if ($input eq "\n"){
+    $input = "UPN.output";
+}else{
+    chomp($input);
 }
 
-close(READ);
-close $write_fh;
+print "Enter name of file that contains list of netIDs [netid.txt]: ";
+$netids = <STDIN>;
+if ($netids eq "\n"){
+    $netids = "netid.txt";
 
-#parse the file "netid.txt". For each netid, find the corresponding email address in "output.txt", if it exists
-#
-#it is safe to assume that the email that corresponds with a netid will be in the form:
-#<netid>@<some.rutgers.email>
-#
-#the addresses that are found are written to output2.txt
+}else{
+    chomp($netids);
+}
 
+print "Enter name of file to output [output.txt]: ";
+$output = <STDIN>;
+if ($output eq "\n"){
+    $output = "output.txt";
+}else{
+    chomp($output);
+}
 
-open(READ_NETIDS, "netid.txt") or die("the file netid.txt could not be opened, or does not exist\n");
-open(READ_OUTPUT, "output.txt") or die("could not open output.txt for reading\n");
-open(my $write_fh, '+>', "output2.txt") or die("could not open output2.txt for writing\n");
+open(READ_UPNS, $input) or die("could not open $input for reading\n");
+open(READ_NETIDS, $netids) or die("could not open $netids for reading\n");
+open(my $write_fh, '+>', $output) or die("could not open $output for writing\n");
 
+#another option for checking if file is empty
+#if(-z $input){
+#    print "$input file is empty\n";
+#}
+
+#if(-z $netids){
+#    print "$netids file is empty\n";
+#}
+
+#flags to see if file is empty
+$netids_nonempty = 0;
+$input_nonempty = 0;
 
 foreach $netid (<READ_NETIDS>){
-      
+
+    #if all whitespace
+    if($netid =~/^\s*$/){
+        next;
+    }
+    
+    $netids_nonempty = 1;
+
     #get rid of newline in $netid
-    $/ = "\n";
     chomp($netid);
 
     #flag to see if name is found in output.txt
     $found = 0;
-    
-    foreach $line (<READ_OUTPUT>){
 
-        #  set default variable to $line so regex can parse it 
-        $_ = $line;
+    foreach $line (<READ_UPNS>){
+        if($line =~/^\s*$/){
+            next;
+        }
 
-        #if netid found in output, write to output2.txt
-        if(/^$netid@/){
-            print $write_fh ($line);
+        $input_nonempty = 1;
+
+        #if line contains ":" and also $netid
+        if(index($line, ":") != -1  && index($line, $netid) != -1){
+ 
+            #tokenizes line on deliminator ":"
+            @tokens = split(/:/, $line);
+
+            #write to output file
+            print $write_fh ($tokens[1] . "\n");
             $found = 1;
-            last; #aka break 
+            last;
         }
     }
 
@@ -68,15 +83,17 @@ foreach $netid (<READ_NETIDS>){
         print "netID not found: $netid\n";
     }
 
-    #reset file handler for READ_OUTPUT to top of file
-    seek READ_OUTPUT, 0,0;    
-    
+    #reset file handler for READ_UPNS
+    seek READ_UPNS, 0, 0;
+
 }
 
-#removes intermediary file
-unlink("output.txt");
+if($netids_nonempty == 0){
+    print "$netids file is empty\n";
+}
 
-close(READ);
-close $write_fh;
+if($input_nonempty == 0){
+    print "$input file is empty\n";
+}
 
 
